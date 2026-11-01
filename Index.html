@@ -1,0 +1,152 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ice Fishing AI Analyzer</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#080d18;color:white;font-family:Arial;padding:18px}
+h1{text-align:center;color:#45dcfa}
+.card{background:#172238;border:1px solid #30415c;border-radius:14px;padding:16px;margin:15px 0}
+button{background:#176477;color:white;border:0;padding:13px 8px;border-radius:9px;margin:4px;font-size:14px}
+.grid{display:grid;grid-template-columns:1fr 1fr}
+.stat{font-size:25px;color:#45dcfa;font-weight:bold}
+.row{padding:9px;border-bottom:1px solid #30415c;display:flex;justify-content:space-between}
+.small{color:#aab7c9;font-size:12px}
+</style>
+</head>
+<body>
+
+<h1>🎣 ICE FISHING AI</h1>
+<p style="text-align:center">1xBet | Evolution Gaming</p>
+
+<div class="card">
+<h3>LIVE ANALYSIS</h3>
+<div class="grid">
+<div>Total Rounds<div class="stat" id="total">0</div></div>
+<div>Last Result<div class="stat" id="last">--</div></div>
+</div>
+</div>
+
+<div class="card">
+<h3>ADD LIVE RESULT</h3>
+<div id="buttons"></div>
+<p class="small">Select the result displayed in your game.</p>
+</div>
+
+<div class="card">
+<h3>RESULT STATISTICS</h3>
+<div id="stats"></div>
+</div>
+
+<div class="card">
+<h3>NEXT RESULT ESTIMATE</h3>
+<div id="estimate">Record 10 rounds first.</div>
+<p class="small">Historical frequency estimate only. Not a guaranteed prediction.</p>
+</div>
+
+<div class="card">
+<h3>ROUND HISTORY</h3>
+<div id="history"></div>
+<button onclick="clearHistory()">Clear All Results</button>
+</div>
+
+<script>
+const names=[
+"Leaf 1",
+"Leaf 2",
+"Lil' Blues",
+"Big Oranges",
+"Huge Reds"
+];
+
+let history=JSON.parse(
+localStorage.getItem("iceHistory")||"[]"
+);
+
+const buttons=document.getElementById("buttons");
+
+names.forEach((name,index)=>{
+let button=document.createElement("button");
+button.textContent=name;
+button.onclick=()=>{
+history.unshift(index);
+save();
+render();
+};
+buttons.appendChild(button);
+});
+
+function save(){
+localStorage.setItem(
+"iceHistory",JSON.stringify(history)
+);
+}
+
+function render(){
+let counts=names.map((_,i)=>
+history.filter(x=>x===i).length
+);
+
+let total=history.length;
+
+document.getElementById("total").textContent=total;
+
+document.getElementById("last").textContent=
+total?names[history[0]]:"--";
+
+document.getElementById("stats").innerHTML=
+names.map((name,i)=>{
+let percent=total?counts[i]/total*100:0;
+return `
+<div class="row">
+<span>${name}</span>
+<strong>${counts[i]} (${percent.toFixed(1)}%)</strong>
+</div>`;
+}).join("");
+
+document.getElementById("history").innerHTML=
+history.length
+?history.slice(0,30).map((x,i)=>
+`<div class="row">
+<span>Round ${total-i}</span>
+<strong>${names[x]}</strong>
+</div>`).join("")
+:"No results recorded.";
+
+if(total<10){
+document.getElementById("estimate").textContent=
+"Record "+(10-total)+" more rounds.";
+return;
+}
+
+let estimates=counts.map(x=>
+(x+1)/(total+5)*100
+);
+
+let sorted=estimates.map((p,i)=>({
+name:names[i],percent:p
+})).sort((a,b)=>b.percent-a.percent);
+
+document.getElementById("estimate").innerHTML=
+sorted.map(x=>`
+<div class="row">
+<span>${x.name}</span>
+<strong>${x.percent.toFixed(1)}%</strong>
+</div>`).join("");
+}
+
+function clearHistory(){
+if(confirm("Delete all history?")){
+history=[];
+save();
+render();
+}
+}
+
+render();
+</script>
+</body>
+</html>
